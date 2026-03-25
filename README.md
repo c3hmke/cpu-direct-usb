@@ -4,10 +4,20 @@ USB latency analyzer that counts chips between your input devices and the CPU. F
 
 ## Quick Start
 
-Run in PowerShell:
+### Run in PowerShell:
 
 ```powershell
 irm https://tools.mariusheier.com/cpudirect.ps1 | iex
+```
+
+### Run in bash:
+
+```bash
+curl -fsSL https://tools.mariusheier.com/cpudirect.bash | bash
+```
+or
+```bash
+wget -qO- https://tools.mariusheier.com/cpudirect.bash | bash
 ```
 
 ## What It Shows
@@ -28,9 +38,16 @@ irm https://tools.mariusheier.com/cpudirect.ps1 | iex
 
 All releases include SHA256 checksums. To verify:
 
+Powershell:
 ```powershell
 (Get-FileHash cpudirect.ps1 -Algorithm SHA256).Hash
 ```
+
+bash:
+```bash
+sha256sum cpudirect.bash
+```
+
 
 Compare with the checksum in the [release notes](https://github.com/MariusHeier/cpu-direct-usb/releases).
 

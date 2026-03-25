@@ -17,14 +17,19 @@ jobs:
       - name: Generate checksums
         run: |
           sha256sum cpudirect.ps1 > checksums.txt
+          sha256sum cpudirect.bash > checksums_bash.txt
           echo "## SHA256 Checksums" > release_notes.md
           echo '```' >> release_notes.md
           cat checksums.txt >> release_notes.md
+          cat checksums_bash.txt >> release_notes.md
           echo '```' >> release_notes.md
           echo "" >> release_notes.md
           echo "## Verify" >> release_notes.md
           echo '```powershell' >> release_notes.md
           echo '(Get-FileHash cpudirect.ps1 -Algorithm SHA256).Hash' >> release_notes.md
+          echo '```' >> release_notes.md
+          echo '```bash' >> release_notes.md
+          echo 'sha256sum cpudirect.bash' >> release_notes.md
           echo '```' >> release_notes.md
 
       - name: Create Release
@@ -32,5 +37,7 @@ jobs:
         with:
           files: |
             cpudirect.ps1
+            cpudirect.bash
             checksums.txt
+            checksums_bash.txt
           body_path: release_notes.md

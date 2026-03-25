@@ -686,14 +686,6 @@ show_full_analysis() {
       *) chipColor="$CORAL";  chipLabel="CHIP $chip" ;;
     esac
 
-    echo
-    echo -e "  ${chipColor}${ctrl_idx}: ${chipLabel}${RESET}"
-    echo "      $name"
-    echo -e "      ${DIM}BDF:$bdf VID:$vid DID:$did | $platform | $usb${RESET}"
-    echo -e "      IRQ: ${WHITE}${msi}${RESET}"
-    echo -e "      ${DIM}PCI runtime PM: control=${pwrctrl:-unknown}, status=${pwrstate:-unknown}${RESET}"
-    [[ -n "$driver" ]] && echo -e "      ${DIM}Driver: $driver${RESET}"
-
     local -a attached=()
     local dk drow dname dchip dhubcount
     for dk in "${!DEVICES[@]}"; do
@@ -703,6 +695,28 @@ show_full_analysis() {
         attached+=("$dname|$dhubcount")
       fi
     done
+
+    local bodyDim=0
+    if ((${#attached[@]} == 0)); then
+      bodyDim=1
+    fi
+
+    echo
+    echo -e "  ${chipColor}${ctrl_idx}: ${chipLabel}${RESET}"
+    if (( bodyDim == 1 )); then
+      echo -e "      ${DIM}$name${RESET}"
+      echo -e "      ${DIM}BDF:$bdf VID:$vid DID:$did | $platform | $usb${RESET}"
+      echo -e "      ${DIM}IRQ: ${msi}${RESET}"
+      echo -e "      ${DIM}PCI runtime PM: control=${pwrctrl:-unknown}, status=${pwrstate:-unknown}${RESET}"
+      [[ -n "$driver" ]] && echo -e "      ${DIM}Driver: $driver${RESET}"
+      echo -e "      ${DIM}Devices: none${RESET}"
+    else
+      echo "      $name"
+      echo -e "      ${DIM}BDF:$bdf VID:$vid DID:$did | $platform | $usb${RESET}"
+      echo -e "      IRQ: ${WHITE}${msi}${RESET}"
+      echo -e "      ${DIM}PCI runtime PM: control=${pwrctrl:-unknown}, status=${pwrstate:-unknown}${RESET}"
+      [[ -n "$driver" ]] && echo -e "      ${DIM}Driver: $driver${RESET}"
+    fi
 
     if ((${#attached[@]})); then
       echo -e "      ${DIM}Devices:${RESET}"

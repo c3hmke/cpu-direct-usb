@@ -595,8 +595,7 @@ show_tree() {
   echo -e "  ${DIM}=============================================================${RESET}"
   echo
 
-  local -a chip0 chip1 chip2
-  local k row chip name
+  local -a chip0=() chip1=() chip2=()  local k row chip name
   for k in "${!DEVICES[@]}"; do
     row="${DEVICES[$k]}"
     IFS='|' read -r _usb name _short _vid _pid chip _hubcount _hubnames _bdf _cname _ctype _portpath _speed <<< "$row"

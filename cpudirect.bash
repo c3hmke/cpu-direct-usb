@@ -462,6 +462,7 @@ declare -A CONTROLLERS
 # Device row:
 # USBDEV|NAME|SHORT|VID|PID|CHIPCOUNT|HUBCOUNT|HUBNAMES|CTRLBDF|CTRLNAME|CTRLTYPE|PORTPATH|SPEED
 declare -A DEVICES
+declare -A CTRL_INDEX_BY_BDF
 
 HAS_CHIP0=0
 HAS_CHIP1=0
@@ -670,8 +671,10 @@ show_full_analysis() {
     done | sort -n | awk '{print $2}'
   )
 
+  local ctrl_idx=0
   local bdf row vid did type chip name platform usb msi pwr driver pwrctrl pwrstate
   for bdf in "${sorted_ctrls[@]}"; do
+    CTRL_INDEX_BY_BDF["$bdf"]="$ctrl_idx"
     row="${CONTROLLERS[$bdf]}"
     IFS='|' read -r _bdf vid did type chip name platform usb msi pwr driver <<< "$row"
     IFS='|' read -r pwrctrl pwrstate <<< "$pwr"
@@ -684,7 +687,7 @@ show_full_analysis() {
     esac
 
     echo
-    echo -e "  ${chipColor}${chipLabel}${RESET}"
+    echo -e "  ${chipColor}${ctrl_idx}: ${chipLabel}${RESET}"
     echo "      $name"
     echo -e "      ${DIM}BDF:$bdf VID:$vid DID:$did | $platform | $usb${RESET}"
     echo -e "      IRQ: ${WHITE}${msi}${RESET}"
@@ -715,6 +718,8 @@ show_full_analysis() {
         fi
       done
     fi
+
+    ((ctrl_idx++))
   done
 
   echo
@@ -831,30 +836,40 @@ show_optimizations() {
     echo -e "  ${ORANGE}! To apply optimizations: run as root${RESET}"
     echo
     local i=0 count=${#OPTIMIZATIONS[@]}
-    local kind target name desc branch
+    local kind target name desc branch ctrl_idx
     for x in "${OPTIMIZATIONS[@]}"; do
       ((i++))
       branch="|-"
       (( i == count )) && branch="'-"
       IFS='|' read -r kind target name desc <<< "$x"
-      echo -e "  ${DIM}${branch}${RESET} $desc on ${DIM}$name${RESET}"
+      if [[ "$kind" == "PCI_RUNTIME_PM" && -n "${CTRL_INDEX_BY_BDF[$target]:-}" ]]; then
+        ctrl_idx="${CTRL_INDEX_BY_BDF[$target]}"
+        echo -e "  ${DIM}${branch}${RESET} $desc ${DIM}${ctrl_idx} : $name${RESET}"
+      else
+        echo -e "  ${DIM}${branch}${RESET} $desc on ${DIM}$name${RESET}"
+      fi
     done
     echo
     return
   fi
 
-  local idx=1 kind target name desc
+  local idx=0 kind target name desc ctrl_idx
   for x in "${OPTIMIZATIONS[@]}"; do
     IFS='|' read -r kind target name desc <<< "$x"
-    echo -e "  ${SKY}[$idx]${RESET} $desc"
-    echo -e "      ${DIM}$name${RESET}"
+    if [[ "$kind" == "PCI_RUNTIME_PM" && -n "${CTRL_INDEX_BY_BDF[$target]:-}" ]]; then
+      ctrl_idx="${CTRL_INDEX_BY_BDF[$target]}"
+      echo -e "  ${SKY}[$idx]${RESET} $desc ${DIM}${ctrl_idx} : $name${RESET}"
+    else
+      echo -e "  ${SKY}[$idx]${RESET} $desc"
+      echo -e "      ${DIM}$name${RESET}"
+    fi
     echo
     ((idx++))
   done
 
   read -r -p "  Enter number to apply, or press Enter to skip: " choice
   if [[ "$choice" =~ ^[0-9]+$ ]]; then
-    local n=$((choice - 1))
+    local n=$choice
     if (( n >= 0 && n < ${#OPTIMIZATIONS[@]} )); then
       IFS='|' read -r kind target name desc <<< "${OPTIMIZATIONS[$n]}"
       apply_optimization "$kind" "$target" "$name"
